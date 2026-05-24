@@ -117,7 +117,8 @@ body {
   padding: 11px 22px; border-bottom: 1.5px solid var(--border);
   flex-shrink: 0; background: var(--bg);
 }
-.logo { display: flex; align-items: center; gap: 9px; }
+.logo { display: flex; flex-direction: column; gap: 1px; }
+.logo-tagline { font-size: 11px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.01em; }
 .logo-mark {
   width: 30px; height: 30px;
   background: var(--logo-grad);
@@ -645,6 +646,7 @@ body {
 <header class="header">
   <div class="logo">
     <span class="logo-name">StickerForge</span>
+    <span class="logo-tagline">AI sticker &amp; mascot generator</span>
   </div>
   <div class="header-right">
     <div class="header-steps">
