@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StickerForge — AI Sticker Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0C0C0F;
+  --surface: #141418;
+  --surface-2: #1C1C22;
+  --surface-3: #222228;
+  --border: #2A2A34;
+  --border-hover: #3C3C4A;
+  --text: #EEEEF2;
+  --text-muted: #68687A;
+  --text-dim: #44445A;
+  --accent: #7C3AED;
+  --accent-hover: #6D28D9;
+  --accent-light: #A78BFA;
+  --accent-glow: rgba(124,58,237,0.22);
+  --pink: #EC4899;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-xs: 6px;
+}
+
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Inter', -apple-system, sans-serif;
+  height: 100vh; overflow: hidden;
+  display: flex; flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Header ────── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 22px; border-bottom: 1px solid var(--border);
+  flex-shrink: 0; background: var(--surface);
+}
+.logo { display: flex; align-items: center; gap: 9px; }
+.logo-mark {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, var(--accent), var(--pink));
+  border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 14px;
+}
+.logo-name { font-size: 16px; font-weight: 700; letter-spacing: -0.4px; }
+.logo-tag { font-size: 11px; font-weight: 500; color: var(--text-muted); background: var(--surface-2); padding: 2px 8px; border-radius: 20px; border: 1px solid var(--border); }
+.header-steps { display: flex; align-items: center; gap: 6px; }
+.step-pill { background: var(--surface-2); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 500; color: var(--text-muted); }
+.step-arr { font-size: 10px; color: var(--text-dim); }
+
+/* ── Layout ────── */
+.main { display: flex; flex: 1; overflow: hidden; }
+
+/* ── Controls panel ────── */
+.controls {
+  width: 310px; flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.controls-inner { flex: 1; overflow-y: auto; padding: 16px 16px 0; display: flex; flex-direction: column; gap: 16px; }
+.controls-footer { flex-shrink: 0; border-top: 1px solid var(--border); padding: 12px 16px 14px; }
+
+.section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 7px; }
+
+/* Name input */
+.name-input {
+  width: 100%; background: var(--surface-2); border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text);
+  font-family: inherit; font-size: 15px; font-weight: 600; padding: 10px 12px;
+  outline: none; transition: border-color .15s, box-shadow .15s; letter-spacing: -.2px;
+}
+.name-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.name-input::placeholder { font-weight: 400; color: var(--text-muted); }
+.name-input.shake { animation: shake .35s ease; border-color: #EF4444; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+.field-hint { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+
+/* Mode tabs */
+.mode-tabs { display: flex; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 3px; gap: 3px; }
+.mode-tab { flex: 1; padding: 7px 10px; font-family: inherit; font-size: 12px; font-weight: 600; border: none; border-radius: 5px; cursor: pointer; transition: all .12s; background: transparent; color: var(--text-muted); }
+.mode-tab.active { background: var(--surface-3); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+.mode-tab:hover:not(.active) { color: var(--text); }
+
+/* Guided / Custom containers */
+#guidedMode { display: flex; flex-direction: column; gap: 16px; }
+#customMode { display: none; flex-direction: column; gap: 16px; }
+
+/* Category chips */
+.cat-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.cat-chip { display: flex; align-items: center; gap: 4px; padding: 5px 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 20px; font-family: inherit; font-size: 11.5px; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: all .12s; white-space: nowrap; }
+.cat-chip:hover { border-color: var(--border-hover); color: var(--text); }
+.cat-chip.selected { background: rgba(124,58,237,.1); border-color: var(--accent); color: var(--accent-light); box-shadow: 0 0 0 1px var(--accent); }
+
+/* Mascot grid */
+.mascot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.mascot-btn { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; transition: all .12s; text-align: left; width: 100%; }
+.mascot-btn:hover { border-color: var(--border-hover); }
+.mascot-btn.selected { border-color: var(--accent); background: rgba(124,58,237,.08); box-shadow: 0 0 0 1px var(--accent); }
+.mascot-icon { font-size: 18px; flex-shrink: 0; }
+.mascot-name { font-size: 12px; font-weight: 600; color: var(--text); }
+.mascot-sub { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+
+/* Vibe / style grid */
+.styles-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.style-btn { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; transition: all .12s; text-align: left; width: 100%; }
+.style-btn:hover { border-color: var(--border-hover); }
+.style-btn.selected { border-color: var(--accent); background: rgba(124,58,237,.08); box-shadow: 0 0 0 1px var(--accent); }
+.style-icon { font-size: 16px; line-height: 1; }
+.style-name { font-size: 12px; font-weight: 600; color: var(--text); }
+.style-desc { font-size: 10px; color: var(--text-muted); line-height: 1.3; }
+
+/* Mascot full-width last item */
+.mascot-full { grid-column: span 2; }
+
+/* Inspiration drop zone */
+.inspo-zone {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; padding: 14px 12px;
+  background: var(--surface-2); border: 1.5px dashed var(--border);
+  border-radius: var(--radius-sm); cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.inspo-zone:hover, .inspo-zone.drag-over {
+  border-color: var(--accent); background: rgba(124,58,237,.06);
+}
+.inspo-icon { font-size: 18px; opacity: .55; }
+.inspo-label { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+.inspo-sub { font-size: 10.5px; color: var(--text-dim); }
+.inspo-previews { display: flex; gap: 6px; margin-top: 7px; flex-wrap: wrap; }
+.inspo-thumb {
+  position: relative; width: 56px; height: 56px;
+  border-radius: var(--radius-xs); overflow: hidden;
+  border: 1.5px solid var(--border);
+}
+.inspo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.inspo-remove {
+  position: absolute; top: 2px; right: 2px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: rgba(0,0,0,.7); color: white; font-size: 10px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; border: none; line-height: 1;
+}
+.inspo-remove:hover { background: #EF4444; }
+
+/* Always-visible details input */
+.details-input {
+  width: 100%; background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text); font-family: inherit;
+  font-size: 12.5px; padding: 8px 11px; outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.details-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.details-input::placeholder { color: var(--text-muted); }
+
+/* Custom textarea */
+.custom-textarea { width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: inherit; font-size: 13.5px; line-height: 1.65; padding: 11px 13px; resize: none; outline: none; transition: border-color .15s, box-shadow .15s; min-height: 90px; }
+.custom-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.custom-textarea::placeholder { color: var(--text-muted); }
+.char-row { display: flex; justify-content: flex-end; margin-top: 4px; }
+.char-count { font-size: 11px; color: var(--text-dim); }
+.quick-prompts { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.chip { font-size: 11px; font-weight: 500; color: var(--text-muted); background: var(--surface-2); border: 1px solid var(--border); border-radius: 20px; padding: 3px 9px; cursor: pointer; transition: all .12s; white-space: nowrap; }
+.chip:hover { color: var(--text); border-color: var(--border-hover); }
+
+/* Preview hint */
+.preview-hint {
+  font-size: 11.5px; color: var(--text-muted); line-height: 1.4;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius-xs); padding: 7px 10px; margin-bottom: 10px;
+  display: none;
+}
+.preview-hint strong { color: var(--accent-light); font-weight: 600; }
+
+/* Generate button */
+.generate-btn { width: 100%; padding: 12px 20px; background: linear-gradient(135deg, var(--accent), var(--pink)); color: white; font-family: inherit; font-size: 14px; font-weight: 700; border: none; border-radius: var(--radius); cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: -.1px; }
+.generate-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(124,58,237,.45); }
+.generate-btn:active:not(:disabled) { transform: translateY(0); }
+.generate-btn:disabled { opacity: .55; cursor: not-allowed; }
+.kbd-hint { font-size: 11px; color: var(--text-dim); text-align: center; margin-top: 7px; }
+
+/* ── Canvas wrap (right side) ────── */
+.canvas-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.canvas { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; }
+
+/* ── Empty state + Examples ────── */
+.empty-top { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding: 20px 0 24px; }
+.empty-art { font-size: 40px; opacity: .18; filter: grayscale(1); }
+.empty-title { font-size: 16px; font-weight: 600; opacity: .3; }
+.empty-sub { font-size: 13px; color: var(--text-muted); max-width: 280px; line-height: 1.5; opacity: .45; }
+
+.examples-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 12px; text-align: center; }
+
+.examples-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+.example-card {
+  border-radius: var(--radius); border: 1.5px solid var(--border);
+  overflow: hidden; cursor: pointer; transition: border-color .15s, transform .15s;
+  background: var(--surface);
+}
+.example-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.example-img-wrap { position: relative; aspect-ratio: 1; }
+.example-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.example-hover {
+  position: absolute; inset: 0; background: rgba(124,58,237,.75);
+  color: white; font-size: 13px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity .15s;
+}
+.example-card:hover .example-hover { opacity: 1; }
+.example-footer { padding: 8px 10px; }
+.example-vibe { font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; }
+.example-name { font-size: 13px; font-weight: 700; color: var(--text); }
+
+/* ── Session toolbar ────── */
+.session-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px;
+}
+.run-counter { font-size: 13px; font-weight: 600; color: var(--text); }
+.run-counter span { color: var(--text-muted); font-weight: 400; }
+.clear-btn { font-family: inherit; font-size: 12px; font-weight: 500; color: var(--text-muted); background: none; border: 1px solid var(--border); border-radius: var(--radius-xs); padding: 5px 10px; cursor: pointer; transition: all .12s; }
+.clear-btn:hover { color: var(--text); border-color: var(--border-hover); }
+
+/* ── Run block ────── */
+.run-block { margin-bottom: 28px; }
+.run-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; gap: 8px; }
+.run-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.run-tags { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+.run-ts { font-size: 11px; color: var(--text-dim); flex-shrink: 0; }
+.results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+
+/* Skeleton */
+.skeleton { aspect-ratio: 1; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; position: relative; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 12px; }
+.skeleton::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.03) 50%, transparent 100%); background-size: 200% 100%; animation: shimmer 1.6s ease-in-out infinite; }
+.skeleton-label { font-size: 11px; color: var(--text-dim); z-index: 1; }
+@keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+
+/* Image card */
+.img-card { position: relative; border-radius: var(--radius); border: 2px solid var(--border); overflow: hidden; cursor: pointer; transition: border-color .15s, box-shadow .15s; background: var(--surface); aspect-ratio: 1; }
+.img-card:hover { border-color: var(--border-hover); }
+.img-card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow), 0 8px 32px rgba(124,58,237,.2); }
+.img-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.card-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.88) 0%, rgba(0,0,0,.15) 50%, transparent 100%); display: flex; flex-direction: column; justify-content: flex-end; padding: 10px; gap: 6px; opacity: 0; transition: opacity .15s; }
+.img-card:hover .card-overlay, .img-card.selected .card-overlay { opacity: 1; }
+.card-var-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: .08em; }
+.card-actions { display: flex; gap: 6px; }
+.card-btn { flex: 1; padding: 6px 8px; font-family: inherit; font-size: 12px; font-weight: 600; border-radius: var(--radius-xs); border: none; cursor: pointer; transition: all .12s; }
+.card-btn.save { background: rgba(255,255,255,.12); color: white; backdrop-filter: blur(4px); }
+.card-btn.save:hover { background: rgba(255,255,255,.22); }
+.card-btn.pick { background: var(--accent); color: white; }
+.card-btn.pick:hover { background: var(--accent-hover); }
+.selected-chip { position: absolute; top: 8px; right: 8px; background: var(--accent); color: white; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; letter-spacing: .05em; opacity: 0; transform: scale(.85); transition: all .15s; }
+.img-card.selected .selected-chip { opacity: 1; transform: scale(1); }
+
+/* ── Refine strip (bottom of canvas-wrap, outside scroll) ────── */
+.refine-strip {
+  flex-shrink: 0; background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 12px 24px;
+}
+.refine-inner { display: flex; align-items: center; gap: 10px; }
+.refine-sel { font-size: 12px; font-weight: 600; color: var(--accent-light); background: rgba(124,58,237,.1); border: 1px solid rgba(124,58,237,.25); padding: 2px 10px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+.refine-input { flex: 1; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: inherit; font-size: 13px; padding: 9px 12px; outline: none; transition: border-color .15s, box-shadow .15s; }
+.refine-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.refine-input::placeholder { color: var(--text-muted); }
+.refine-btn { padding: 9px 18px; background: var(--accent); color: white; font-family: inherit; font-size: 13px; font-weight: 600; border: none; border-radius: var(--radius-sm); cursor: pointer; transition: all .12s; white-space: nowrap; }
+.refine-btn:hover { background: var(--accent-hover); }
+.refine-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Error */
+.error-box { background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.25); color: #FCA5A5; border-radius: var(--radius); padding: 13px 15px; font-size: 13px; line-height: 1.5; }
+
+/* Spinner */
+.spinner { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,.3); border-top-color: white; border-radius: 50%; animation: spin .55s linear infinite; flex-shrink: 0; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="logo">
+    <div class="logo-mark">🎨</div>
+    <span class="logo-name">StickerForge</span>
+    <span class="logo-tag">AI-powered</span>
+  </div>
+  <div class="header-steps">
+    <span class="step-pill">Name it</span><span class="step-arr">→</span>
+    <span class="step-pill">Pick vibe</span><span class="step-arr">→</span>
+    <span class="step-pill">Generate</span><span class="step-arr">→</span>
+    <span class="step-pill">Refine</span>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- ── Left panel ── -->
+  <aside class="controls">
+    <div class="controls-inner">
+
+      <div>
+        <div class="section-label">What's the name?</div>
+        <input type="text" class="name-input" id="nameInput" maxlength="30"
+          placeholder="Your brand or product name…"
+          oninput="updatePreviewHint()"
+          onkeydown="if(event.key==='Enter'&&(event.metaKey||event.ctrlKey))generate()">
+        <div class="field-hint">Appears as text on your sticker</div>
+      </div>
+
+      <div class="mode-tabs">
+        <button class="mode-tab active" data-mode="guided" onclick="switchMode('guided')">✦ Guided</button>
+        <button class="mode-tab" data-mode="custom" onclick="switchMode('custom')">✏ Custom</button>
+      </div>
+
+      <!-- Guided mode -->
+      <div id="guidedMode">
+
+        <div>
+          <div class="section-label">Type of business</div>
+          <div class="cat-chips">
+            <button class="cat-chip selected" data-cat="saas"        onclick="pickCat(this)">🚀 App / SaaS</button>
+            <button class="cat-chip"          data-cat="devtool"     onclick="pickCat(this)">⚙️ Dev Tool</button>
+            <button class="cat-chip"          data-cat="newsletter"  onclick="pickCat(this)">📰 Newsletter</button>
+            <button class="cat-chip"          data-cat="podcast"     onclick="pickCat(this)">🎙️ Podcast</button>
+            <button class="cat-chip"          data-cat="ai"          onclick="pickCat(this)">🧠 AI Product</button>
+            <button class="cat-chip"          data-cat="cafe"        onclick="pickCat(this)">☕ Café</button>
+            <button class="cat-chip"          data-cat="restaurant"  onclick="pickCat(this)">🍜 Restaurant</button>
+            <button class="cat-chip"          data-cat="fitness"     onclick="pickCat(this)">💪 Fitness</button>
+            <button class="cat-chip"          data-cat="health"      onclick="pickCat(this)">🌿 Health</button>
+            <button class="cat-chip"          data-cat="store"       onclick="pickCat(this)">🛍️ Store</button>
+            <button class="cat-chip"          data-cat="fashion"     onclick="pickCat(this)">👗 Fashion</button>
+            <button class="cat-chip"          data-cat="community"   onclick="pickCat(this)">🎉 Community</button>
+            <button class="cat-chip"          data-cat="gaming"      onclick="pickCat(this)">🎮 Gaming</button>
+            <button class="cat-chip"          data-cat="education"   onclick="pickCat(this)">🎓 Education</button>
+            <button class="cat-chip"          data-cat="creative"    onclick="pickCat(this)">🎨 Creative</button>
+            <button class="cat-chip"          data-cat="photography" onclick="pickCat(this)">📸 Photography</button>
+            <button class="cat-chip"          data-cat="finance"     onclick="pickCat(this)">💰 Finance</button>
+            <button class="cat-chip"          data-cat="services"    onclick="pickCat(this)">💼 Services</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-label">Mascot style</div>
+          <div class="mascot-grid">
+            <button class="mascot-btn selected" data-mascot="animal" onclick="pickMascot(this)">
+              <span class="mascot-icon">🐱</span>
+              <div><div class="mascot-name">Cute Animal</div><div class="mascot-sub">Cat, bear, fox…</div></div>
+            </button>
+            <button class="mascot-btn" data-mascot="robot" onclick="pickMascot(this)">
+              <span class="mascot-icon">🤖</span>
+              <div><div class="mascot-name">Robot / Tech</div><div class="mascot-sub">Machine character</div></div>
+            </button>
+            <button class="mascot-btn" data-mascot="human" onclick="pickMascot(this)">
+              <span class="mascot-icon">🧙</span>
+              <div><div class="mascot-name">Cartoon Person</div><div class="mascot-sub">Human figure</div></div>
+            </button>
+            <button class="mascot-btn" data-mascot="fantasy" onclick="pickMascot(this)">
+              <span class="mascot-icon">🐉</span>
+              <div><div class="mascot-name">Fantasy Creature</div><div class="mascot-sub">Dragon, wizard…</div></div>
+            </button>
+            <button class="mascot-btn" data-mascot="food" onclick="pickMascot(this)">
+              <span class="mascot-icon">🍕</span>
+              <div><div class="mascot-name">Object / Food</div><div class="mascot-sub">Anthropomorphic</div></div>
+            </button>
+            <button class="mascot-btn" data-mascot="hero" onclick="pickMascot(this)">
+              <span class="mascot-icon">🦸</span>
+              <div><div class="mascot-name">Superhero</div><div class="mascot-sub">Action figure</div></div>
+            </button>
+            <button class="mascot-btn mascot-full" data-mascot="badge" onclick="pickMascot(this)">
+              <span class="mascot-icon">🏷️</span>
+              <div><div class="mascot-name">Badge / Logo Only</div><div class="mascot-sub">No character — icon + text</div></div>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-label">Vibe</div>
+          <div class="styles-grid">
+            <button class="style-btn selected" data-vibe="cute"      onclick="pickVibe(this)"><span class="style-icon">🎀</span><span class="style-name">Fun & Cute</span><span class="style-desc">Kawaii, pastel</span></button>
+            <button class="style-btn" data-vibe="bold"      onclick="pickVibe(this)"><span class="style-icon">💥</span><span class="style-name">Bold & Loud</span><span class="style-desc">Thick outlines</span></button>
+            <button class="style-btn" data-vibe="clean"     onclick="pickVibe(this)"><span class="style-icon">✦</span><span class="style-name">Clean & Modern</span><span class="style-desc">Minimal, flat</span></button>
+            <button class="style-btn" data-vibe="retro"     onclick="pickVibe(this)"><span class="style-icon">🕰️</span><span class="style-name">Retro Cool</span><span class="style-desc">Vintage Americana</span></button>
+            <button class="style-btn" data-vibe="tech"      onclick="pickVibe(this)"><span class="style-icon">⚡</span><span class="style-name">Dark Tech</span><span class="style-desc">Cyberpunk, neon</span></button>
+            <button class="style-btn" data-vibe="stamp"     onclick="pickVibe(this)"><span class="style-icon">📮</span><span class="style-name">Official Stamp</span><span class="style-desc">Seal, engraved</span></button>
+            <button class="style-btn" data-vibe="handdrawn" onclick="pickVibe(this)"><span class="style-icon">✏️</span><span class="style-name">Hand Drawn</span><span class="style-desc">Sketch, ink</span></button>
+            <button class="style-btn" data-vibe="pixel"     onclick="pickVibe(this)"><span class="style-icon">👾</span><span class="style-name">Pixel Art</span><span class="style-desc">8-bit retro game</span></button>
+            <button class="style-btn" data-vibe="synthwave" onclick="pickVibe(this)"><span class="style-icon">🌅</span><span class="style-name">Synthwave</span><span class="style-desc">80s neon retro</span></button>
+            <button class="style-btn" data-vibe="pastel"    onclick="pickVibe(this)"><span class="style-icon">🌸</span><span class="style-name">Pastel Dream</span><span class="style-desc">Soft, art nouveau</span></button>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-label">Anything specific? <span style="font-size:10px;color:var(--text-dim);text-transform:none;letter-spacing:0;font-weight:400">optional</span></div>
+          <input type="text" class="details-input" id="detailsInput"
+            placeholder="Colors, elements, mood… e.g. 'orange + navy', 'looks fierce'">
+        </div>
+
+        <div>
+          <div class="section-label">Inspiration images <span style="font-size:10px;color:var(--text-dim);text-transform:none;letter-spacing:0;font-weight:400">optional · up to 3</span></div>
+          <div class="inspo-zone" id="inspoZone"
+            ondragover="inspoOnDragOver(event)" ondragleave="inspoOnDragLeave(event)" ondrop="inspoOnDrop(event)"
+            onclick="document.getElementById('inspoFileInput').click()">
+            <span class="inspo-icon">🖼️</span>
+            <span class="inspo-label">Drop images or click to upload</span>
+            <span class="inspo-sub">Mood board · style reference · max 3 images</span>
+          </div>
+          <input type="file" id="inspoFileInput" accept="image/*" multiple style="display:none"
+            onchange="inspoOnFilePick(event)">
+          <div class="inspo-previews" id="inspoPreviews"></div>
+        </div>
+
+      </div><!-- end guided -->
+
+      <!-- Custom mode -->
+      <div id="customMode">
+
+        <div>
+          <div class="section-label">Describe your sticker</div>
+          <textarea class="custom-textarea" id="customDesc" rows="5" maxlength="300"
+            placeholder="A space cat riding a rocket, for a developer tools company…"
+            oninput="updateChar(this)"></textarea>
+          <div class="char-row"><span class="char-count"><span id="charCount">0</span>/300</span></div>
+          <div class="quick-prompts">
+            <span class="chip" onclick="fillPrompt('A rocket-riding cat for a DevOps startup')">🚀 rocket cat</span>
+            <span class="chip" onclick="fillPrompt('A friendly robot mascot for an AI company')">🤖 AI robot</span>
+            <span class="chip" onclick="fillPrompt('A lightning bolt character for a fitness app')">⚡ fitness bolt</span>
+            <span class="chip" onclick="fillPrompt('A vintage coffee cup logo for a cozy café')">☕ café logo</span>
+            <span class="chip" onclick="fillPrompt('A pixel dragon for an indie gaming studio')">🐉 pixel dragon</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-label">Style</div>
+          <div class="styles-grid" id="customStyleGrid">
+            <button class="style-btn selected" data-style="mascot"    onclick="pickStyle(this)"><span class="style-icon">🐱</span><span class="style-name">Cute Mascot</span><span class="style-desc">Kawaii character</span></button>
+            <button class="style-btn" data-style="cartoon"    onclick="pickStyle(this)"><span class="style-icon">💥</span><span class="style-name">Bold Cartoon</span><span class="style-desc">Thick outlines</span></button>
+            <button class="style-btn" data-style="retro"      onclick="pickStyle(this)"><span class="style-icon">🏆</span><span class="style-name">Retro Badge</span><span class="style-desc">Vintage Americana</span></button>
+            <button class="style-btn" data-style="stamp"      onclick="pickStyle(this)"><span class="style-icon">📮</span><span class="style-name">Vintage Stamp</span><span class="style-desc">Official seal</span></button>
+            <button class="style-btn" data-style="tech"       onclick="pickStyle(this)"><span class="style-icon">⚡</span><span class="style-name">Tech / Hacker</span><span class="style-desc">Cyberpunk neon</span></button>
+            <button class="style-btn" data-style="minimal"    onclick="pickStyle(this)"><span class="style-icon">◎</span><span class="style-name">Minimal</span><span class="style-desc">Clean geometric</span></button>
+            <button class="style-btn" data-style="handdrawn"  onclick="pickStyle(this)"><span class="style-icon">✏️</span><span class="style-name">Hand Drawn</span><span class="style-desc">Sketch, ink</span></button>
+            <button class="style-btn" data-style="pixel"      onclick="pickStyle(this)"><span class="style-icon">👾</span><span class="style-name">Pixel Art</span><span class="style-desc">8-bit retro game</span></button>
+            <button class="style-btn" data-style="synthwave"  onclick="pickStyle(this)"><span class="style-icon">🌅</span><span class="style-name">Synthwave</span><span class="style-desc">80s neon retro</span></button>
+            <button class="style-btn" data-style="pastel"     onclick="pickStyle(this)"><span class="style-icon">🌸</span><span class="style-name">Pastel Dream</span><span class="style-desc">Soft, art nouveau</span></button>
+          </div>
+        </div>
+
+      </div><!-- end custom -->
+
+    </div><!-- end controls-inner -->
+
+    <div class="controls-footer">
+      <div class="preview-hint" id="previewHint"></div>
+      <button class="generate-btn" id="generateBtn" onclick="generate()">
+        <span id="btnIcon">✨</span>
+        <span id="btnText">Generate 3 Stickers</span>
+      </button>
+      <div class="kbd-hint">⌘ + Enter to generate</div>
+    </div>
+  </aside>
+
+  <!-- ── Right side ── -->
+  <div class="canvas-wrap">
+
+    <!-- Scrollable canvas -->
+    <main class="canvas" id="canvas">
+
+      <!-- Empty state -->
+      <div id="emptyState">
+        <div class="empty-top">
+          <div class="empty-art">🎨</div>
+          <div class="empty-title">Your stickers appear here</div>
+          <div class="empty-sub">Name it, pick a vibe, and generate — or click an example below to start.</div>
+        </div>
+        <div class="examples-label">Click any example to load its settings →</div>
+        <div class="examples-grid">
+          <div class="example-card" onclick="loadExample('cute','cafe','animal','CoffeePal')">
+            <div class="example-img-wrap">
+              <img src="/examples/cute.png" alt="Fun & Cute example">
+              <div class="example-hover">Use this style →</div>
+            </div>
+            <div class="example-footer">
+              <span class="example-vibe">🎀 Fun & Cute</span>
+              <span class="example-name">CoffeePal</span>
+            </div>
+          </div>
+          <div class="example-card" onclick="loadExample('bold','fitness','animal','FireFit')">
+            <div class="example-img-wrap">
+              <img src="/examples/bold.png" alt="Bold & Loud example">
+              <div class="example-hover">Use this style →</div>
+            </div>
+            <div class="example-footer">
+              <span class="example-vibe">💥 Bold & Loud</span>
+              <span class="example-name">FireFit</span>
+            </div>
+          </div>
+          <div class="example-card" onclick="loadExample('clean','saas','badge','SwiftPay')">
+            <div class="example-img-wrap">
+              <img src="/examples/clean.png" alt="Clean & Modern example">
+              <div class="example-hover">Use this style →</div>
+            </div>
+            <div class="example-footer">
+              <span class="example-vibe">✦ Clean & Modern</span>
+              <span class="example-name">SwiftPay</span>
+            </div>
+          </div>
+          <div class="example-card" onclick="loadExample('retro','cafe','robot','Grind')">
+            <div class="example-img-wrap">
+              <img src="/examples/retro.png" alt="Retro Cool example">
+              <div class="example-hover">Use this style →</div>
+            </div>
+            <div class="example-footer">
+              <span class="example-vibe">🕰️ Retro Cool</span>
+              <span class="example-name">Grind</span>
+            </div>
+          </div>
+          <div class="example-card" onclick="loadExample('tech','saas','robot','CodeBot')">
+            <div class="example-img-wrap">
+              <img src="/examples/tech.png" alt="Dark Tech example">
+              <div class="example-hover">Use this style →</div>
+            </div>
+            <div class="example-footer">
+              <span class="example-vibe">⚡ Dark Tech</span>
+              <span class="example-name">CodeBot</span>
+            </div>
+          </div>
+          <div class="example-card" onclick="loadExample('stamp','services','badge','LexCo')">
+            <div class="example-img-wrap">
+              <img src="/examples/stamp.png" alt="Official Stamp example">
+              <div class="example-hover">Use this style →</div>
+            </div>
+            <div class="example-footer">
+              <span class="example-vibe">📮 Official Stamp</span>
+              <span class="example-name">LexCo</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Session content (hidden until first generate) -->
+      <div id="sessionContent" style="display:none">
+        <div class="session-toolbar">
+          <div class="run-counter" id="runCounter">0 runs <span>this session</span></div>
+          <button class="clear-btn" onclick="clearSession()">Clear session</button>
+        </div>
+        <div id="runsContainer"></div>
+      </div>
+
+    </main>
+
+    <!-- Refine strip (outside scroll, always at bottom when active) -->
+    <div class="refine-strip" id="refineStrip" style="display:none">
+      <div class="refine-inner">
+        <span class="refine-sel" id="refineSelLabel">—</span>
+        <input class="refine-input" id="refineInput"
+          placeholder="What would you change? Colors, pose, expression…"
+          onkeydown="if(event.key==='Enter') refine()">
+        <button class="refine-btn" id="refineBtn" onclick="refine()">Refine →</button>
+      </div>
+    </div>
+
+  </div><!-- end canvas-wrap -->
+
+</div>
+
+<script>
+// ── Labels ────────────────────────────────
+const CAT_LABELS = {
+  saas:'🚀 App/SaaS', devtool:'⚙️ Dev Tool', newsletter:'📰 Newsletter', podcast:'🎙️ Podcast', ai:'🧠 AI Product',
+  cafe:'☕ Café', restaurant:'🍜 Restaurant', fitness:'💪 Fitness', health:'🌿 Health',
+  store:'🛍️ Store', fashion:'👗 Fashion', community:'🎉 Community', gaming:'🎮 Gaming',
+  education:'🎓 Education', creative:'🎨 Creative', photography:'📸 Photography', finance:'💰 Finance', services:'💼 Services',
+};
+const MASCOT_LABELS = {animal:'🐱 Animal',robot:'🤖 Robot',human:'🧙 Person',fantasy:'🐉 Fantasy',food:'🍕 Object',hero:'🦸 Hero',badge:'🏷️ Badge'};
+const VIBE_LABELS   = {cute:'🎀 Cute',bold:'💥 Bold',clean:'✦ Clean',retro:'🕰️ Retro',tech:'⚡ Tech',stamp:'📮 Stamp',handdrawn:'✏️ Sketch',pixel:'👾 Pixel',synthwave:'🌅 Synth',pastel:'🌸 Pastel'};
+
+const CHAR_PREVIEWS = {
+  animal: {
+    saas:'orange tabby in astronaut helmet', devtool:'raccoon with wrench + circuit board', newsletter:'owl with quill and scroll',
+    podcast:'golden retriever with headphones', ai:'silver fox with holographic eyes', cafe:'honey bear with coffee cup',
+    restaurant:'bear chef with steaming bowl', fitness:'wolf in power stance', health:'white rabbit meditating',
+    store:'red panda with shopping bag', fashion:'sleek cat in sunglasses', community:'owl with spectacles',
+    gaming:'red panda gamer with controller', education:'owl professor with mortarboard', creative:'fox with paintbrush',
+    photography:'fox with vintage camera', finance:'beaver with gold coins', services:'golden retriever in bow-tie',
+  },
+  robot: {
+    saas:'blocky robot with hologram display', devtool:'workshop robot with multi-tool arm', newsletter:'mailbot with envelope-slot mouth',
+    podcast:'radio-transmitter robot with waveform face', ai:'neural-network robot with glowing synapses', cafe:'espresso-machine robot',
+    restaurant:'copper kitchen robot chef', fitness:'sporty piston-leg robot', health:'wellness robot with heart-rate display',
+    store:'shopping-cart robot', fashion:'haute-couture chrome robot', community:'broadcast tower robot',
+    gaming:'gaming rig robot with RGB lighting', education:'chalkboard robot with graduation cap', creative:'artist robot with paintbrush arm',
+    photography:'camera-lens robot with aperture eye', finance:'fintech robot in chrome suit jacket', services:'professional helper robot',
+  },
+  human: {
+    saas:'cartoon tech person with glowing laptop', devtool:'cartoon hacker in binary-pattern hoodie', newsletter:'cartoon writer at typewriter',
+    podcast:'cartoon podcaster with headphones + mic', ai:'cartoon AI researcher with neural diagram', cafe:'cartoon barista with coffee',
+    restaurant:'cartoon chef with tasting spoon', fitness:'cartoon athlete in action', health:'cartoon wellness coach in yoga pose',
+    store:'cartoon shopkeeper with price tag', fashion:'stylish cartoon designer with sketchpad', community:'cartoon organizer with megaphone',
+    gaming:'cartoon gamer with controller', education:'cartoon teacher with pointer', creative:'cartoon artist with beret',
+    photography:'cartoon photographer with camera', finance:'cartoon financial advisor with charts', services:'cartoon professional with briefcase',
+  },
+  fantasy: {
+    saas:'tiny code-wizard in circuit robes', devtool:'mechanical gear dragon', newsletter:'paper-golem made of origami letters',
+    podcast:'music-sprite with headphone wings', ai:'digital phoenix of data streams', cafe:'cozy teapot spirit creature',
+    restaurant:'kitchen genie from a cooking pot', fitness:'fire phoenix in battle stance', health:'gentle forest spirit',
+    store:'mischievous shop-sprite', fashion:'glamorous style-fae with fabric wings', community:'golden gathering spirit',
+    gaming:'pixel-wizard casting 8-bit spells', education:'scholarly owl-wizard', creative:'art-muse paint sprite',
+    photography:'vision-sprite with camera-lens eye', finance:'wealth-guardian in classical toga', services:'helpful djinn from briefcase',
+  },
+  food: {
+    saas:'smiling floppy-disk character', devtool:'coffee-mug with wrench handle', newsletter:'cheerful envelope with googly eyes',
+    podcast:'anthropomorphic microphone', ai:'brain character with circuit texture', cafe:'chubby latte-cup with foam hair',
+    restaurant:'ramen-bowl with noodle hair', fitness:'dumbbell character flexing', health:'green smoothie doing yoga',
+    store:'shopping-bag with handle ears', fashion:'high-heel shoe on catwalk', community:'speech-bubble character',
+    gaming:'retro game cartridge character', education:'pencil with graduation-cap tip', creative:'paint-tube squeezing art',
+    photography:'vintage SLR camera character', finance:'animated gold coin in suit', services:'briefcase character',
+  },
+  hero: {
+    saas:'tech superhero with code-bracket emblem', devtool:'dev-hero in hoodie-cape', newsletter:'journalist-hero with press hat',
+    podcast:'sound-hero with speaker-wave powers', ai:'AI-superhero with neural halo', cafe:'barista-hero with cape-apron',
+    restaurant:'chef-superhero with whisk wand', fitness:'muscular fitness superhero', health:'wellness hero with healing aura',
+    store:'shopping hero with cart-shield', fashion:'style superhero with fabric-whip', community:'community champion with megaphone',
+    gaming:'gamer-hero in battle armor', education:'knowledge hero with book-shield', creative:'art-hero with paint-splatter powers',
+    photography:'photo-hero with camera-cannon', finance:'finance champion with coin shield', services:'professional hero in suit-armor',
+  },
+  badge: {'*':'bold badge logo design'},
+};
+const VIBE_PREVIEWS = {
+  cute:'kawaii style', bold:'bold pop art', clean:'minimal flat design', retro:'vintage Americana',
+  tech:'cyberpunk neon', stamp:'official stamp', handdrawn:'hand-drawn sketch', pixel:'pixel art',
+  synthwave:'80s synthwave', pastel:'pastel dream',
+};
+
+// ── State ─────────────────────────────────
+let allRuns         = [];
+let activeMode      = 'guided';
+let guidedCategory  = 'saas';
+let guidedMascot    = 'animal';
+let guidedVibe      = 'cute';
+let customStyle     = 'mascot';
+let activeSelection = null; // {runId, cardIdx}
+let inspoImages     = [];   // [{dataUrl, b64}] — up to 3
+
+// ── Mode / pickers ────────────────────────
+function switchMode(mode) {
+  activeMode = mode;
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+  document.getElementById('guidedMode').style.display  = mode === 'guided' ? 'flex' : 'none';
+  document.getElementById('customMode').style.display  = mode === 'custom' ? 'flex' : 'none';
+  updatePreviewHint();
+}
+
+function pickCat(btn) {
+  document.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected'); guidedCategory = btn.dataset.cat; updatePreviewHint();
+}
+function pickMascot(btn) {
+  document.querySelectorAll('.mascot-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected'); guidedMascot = btn.dataset.mascot; updatePreviewHint();
+}
+function pickVibe(btn) {
+  document.querySelectorAll('#guidedMode .style-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected'); guidedVibe = btn.dataset.vibe; updatePreviewHint();
+}
+function pickStyle(btn) {
+  document.querySelectorAll('#customStyleGrid .style-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected'); customStyle = btn.dataset.style;
+}
+function fillPrompt(text) {
+  const ta = document.getElementById('customDesc');
+  ta.value = text; updateChar(ta); ta.focus();
+}
+function updateChar(ta) { document.getElementById('charCount').textContent = ta.value.length; }
+
+// ── Preview hint ──────────────────────────
+function updatePreviewHint() {
+  const hint = document.getElementById('previewHint');
+  if (activeMode !== 'guided') { hint.style.display = 'none'; return; }
+  const name    = document.getElementById('nameInput').value.trim();
+  const charMap = CHAR_PREVIEWS[guidedMascot] || CHAR_PREVIEWS.animal;
+  const char    = charMap[guidedCategory] || charMap['*'] || 'character';
+  const vDesc   = VIBE_PREVIEWS[guidedVibe] || '';
+  const forStr  = name ? `for "<strong>${name}</strong>"` : '';
+  hint.style.display = 'block';
+  hint.innerHTML = `Will generate: ${char} ${forStr} · ${vDesc}`;
+}
+
+// ── Load example ──────────────────────────
+function loadExample(vibe, cat, mascot, name) {
+  document.getElementById('nameInput').value = name;
+  switchMode('guided');
+  document.querySelectorAll('.cat-chip').forEach(b => b.classList.toggle('selected', b.dataset.cat === cat));
+  guidedCategory = cat;
+  document.querySelectorAll('.mascot-btn').forEach(b => b.classList.toggle('selected', b.dataset.mascot === mascot));
+  guidedMascot = mascot;
+  document.querySelectorAll('#guidedMode .style-btn').forEach(b => b.classList.toggle('selected', b.dataset.vibe === vibe));
+  guidedVibe = vibe;
+  updatePreviewHint();
+  document.getElementById('nameInput').focus();
+}
+
+// ── Generate ──────────────────────────────
+async function generate(refinement = null) {
+  const name = document.getElementById('nameInput').value.trim();
+  let body;
+
+  if (activeMode === 'guided') {
+    const details = document.getElementById('detailsInput').value.trim();
+    if (!name && !details) {
+      const inp = document.getElementById('nameInput');
+      inp.classList.add('shake'); inp.focus();
+      setTimeout(() => inp.classList.remove('shake'), 400);
+      return;
+    }
+    const inspirationImages = inspoImages.map(i => i.b64);
+    body = {mode:'guided', name, category:guidedCategory, mascotType:guidedMascot, vibe:guidedVibe, details, refinement, inspirationImages};
+  } else {
+    const description = document.getElementById('customDesc').value.trim();
+    if (!description) {
+      const ta = document.getElementById('customDesc');
+      ta.style.borderColor = '#EF4444'; ta.focus();
+      setTimeout(() => ta.style.borderColor = '', 900);
+      return;
+    }
+    const inspirationImages = inspoImages.map(i => i.b64);
+    body = {mode:'custom', name, description, style:customStyle, refinement, inspirationImages};
+  }
+
+  activeSelection = null;
+  setLoading(true);
+
+  // Show skeleton in a new run slot
+  const skeletonId = 'sk_' + Date.now();
+  prependRunSkeleton(skeletonId, body);
+
+  try {
+    const res  = await fetch('/api/generate', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Generation failed');
+    replaceSkeleton(skeletonId, data.images, body);
+  } catch (err) {
+    removeSkeleton(skeletonId);
+    showError(err.message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function refine() {
+  const refinement = document.getElementById('refineInput')?.value.trim() || null;
+  if (activeSelection) {
+    const run = allRuns.find(r => r.id === activeSelection.runId);
+    if (run && run.body) {
+      // Restore settings from the run we're refining
+      const b = run.body;
+      if (b.mode === 'guided') {
+        if (b.category) { guidedCategory = b.category; document.querySelectorAll('.cat-chip').forEach(x => x.classList.toggle('selected', x.dataset.cat === b.category)); }
+        if (b.mascotType){ guidedMascot  = b.mascotType; document.querySelectorAll('.mascot-btn').forEach(x => x.classList.toggle('selected', x.dataset.mascot === b.mascotType)); }
+        if (b.vibe)       { guidedVibe   = b.vibe; document.querySelectorAll('#guidedMode .style-btn').forEach(x => x.classList.toggle('selected', x.dataset.vibe === b.vibe)); }
+        if (b.name)         document.getElementById('nameInput').value = b.name;
+        if (!activeMode || activeMode !== 'guided') switchMode('guided');
+      }
+    }
+  }
+  await generate(refinement);
+}
+
+// ── Loading ───────────────────────────────
+function setLoading(on) {
+  const btn=document.getElementById('generateBtn'), icon=document.getElementById('btnIcon'), text=document.getElementById('btnText'), rb=document.getElementById('refineBtn');
+  btn.disabled = on; if(rb) rb.disabled = on;
+  if(on){ icon.innerHTML='<div class="spinner"></div>'; text.textContent='Generating…'; }
+  else  { icon.textContent='✨'; text.textContent='Generate 3 Stickers'; }
+}
+
+// ── Skeleton run ──────────────────────────
+function prependRunSkeleton(id, body) {
+  showSessionContent();
+  const label = buildRunLabel(body);
+  const el = document.createElement('div');
+  el.id = id;
+  el.className = 'run-block';
+  el.innerHTML = `
+    <div class="run-header">
+      <div><div class="run-name">${label.name}</div><div class="run-tags">${label.tags}</div></div>
+      <span class="run-ts">generating…</span>
+    </div>
+    <div class="results-grid">
+      ${[1,2,3].map(n=>`<div class="skeleton"><span class="skeleton-label">Variation ${n}</span></div>`).join('')}
+    </div>`;
+  const container = document.getElementById('runsContainer');
+  container.insertBefore(el, container.firstChild);
+  el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function replaceSkeleton(skeletonId, images, body) {
+  const el = document.getElementById(skeletonId);
+  if (!el) return;
+  const runId = 'run_' + Date.now();
+  const run   = {id: runId, images, body, ts: Date.now()};
+  allRuns.unshift(run);
+  updateRunCounter();
+  const label = buildRunLabel(body);
+  el.id = runId;
+  el.innerHTML = `
+    <div class="run-header">
+      <div><div class="run-name">${label.name}</div><div class="run-tags">${label.tags}</div></div>
+      <span class="run-ts" data-ts="${run.ts}">just now</span>
+    </div>
+    <div class="results-grid">
+      ${images.map((b64,i) => `
+        <div class="img-card" id="card-${runId}-${i}" onclick="selectCard('${runId}',${i})">
+          <img src="data:image/png;base64,${b64}" alt="Sticker variation ${i+1}" loading="lazy">
+          <div class="card-overlay">
+            <span class="card-var-label">Variation ${i+1}</span>
+            <div class="card-actions">
+              <button class="card-btn save" onclick="downloadImg(event,'${runId}',${i})">↓ Save</button>
+              <button class="card-btn pick" onclick="selectCard('${runId}',${i})">✓ Select</button>
+            </div>
+          </div>
+          <div class="selected-chip">SELECTED</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function removeSkeleton(id) {
+  document.getElementById(id)?.remove();
+  if (allRuns.length === 0) showEmptyState();
+}
+
+// ── Session display ───────────────────────
+function showSessionContent() {
+  document.getElementById('emptyState').style.display  = 'none';
+  document.getElementById('sessionContent').style.display = 'block';
+}
+function showEmptyState() {
+  document.getElementById('emptyState').style.display  = 'block';
+  document.getElementById('sessionContent').style.display = 'none';
+}
+function updateRunCounter() {
+  document.getElementById('runCounter').innerHTML = `${allRuns.length} run${allRuns.length>1?'s':''} <span>this session</span>`;
+}
+
+// ── Select card ───────────────────────────
+function selectCard(runId, cardIdx) {
+  document.querySelectorAll('.img-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById(`card-${runId}-${cardIdx}`)?.classList.add('selected');
+  activeSelection = {runId, cardIdx};
+  const strip = document.getElementById('refineStrip');
+  const label = document.getElementById('refineSelLabel');
+  const input = document.getElementById('refineInput');
+  strip.style.display = 'block';
+  if (label) label.textContent = `Variation ${cardIdx+1} selected`;
+  if (input) { input.placeholder = `What would you change about Variation ${cardIdx+1}?`; input.focus(); }
+}
+
+// ── Download ──────────────────────────────
+function downloadImg(event, runId, cardIdx) {
+  event.stopPropagation();
+  const run = allRuns.find(r => r.id === runId);
+  if (!run) return;
+  const a = document.createElement('a');
+  a.href = 'data:image/png;base64,' + run.images[cardIdx];
+  a.download = `stickerforge-${Date.now()}-v${cardIdx+1}.png`;
+  a.click();
+}
+
+// ── Clear session ─────────────────────────
+function clearSession() {
+  allRuns = []; activeSelection = null;
+  document.getElementById('runsContainer').innerHTML = '';
+  document.getElementById('refineStrip').style.display = 'none';
+  document.getElementById('refineInput').value = '';
+  showEmptyState();
+}
+
+// ── Error ─────────────────────────────────
+function showError(msg) {
+  const container = document.getElementById('runsContainer');
+  const el = document.createElement('div');
+  el.className = 'error-box';
+  el.style.marginBottom = '16px';
+  el.innerHTML = `${msg}${msg.toLowerCase().includes('key')||msg.toLowerCase().includes('api') ? '<div style="margin-top:6px;font-size:12px;color:#9CA3AF">Check your <code>OPENAI_API_KEY</code> in the <code>.env</code> file.</div>' : ''}`;
+  container.insertBefore(el, container.firstChild);
+  showSessionContent();
+}
+
+// ── Helpers ───────────────────────────────
+function buildRunLabel(body) {
+  if (body.mode === 'guided') {
+    const name = body.name?.trim() || 'Untitled';
+    const parts = [CAT_LABELS[body.category], MASCOT_LABELS[body.mascotType], VIBE_LABELS[body.vibe]].filter(Boolean);
+    if (body.inspirationImages?.length) parts.push(`🖼️ ${body.inspirationImages.length} ref`);
+    return {name, tags: parts.join(' · ')};
+  } else {
+    const name = body.name?.trim() || (body.description||'').slice(0,30) || 'Custom';
+    const tags = body.inspirationImages?.length ? `Custom · 🖼️ ${body.inspirationImages.length} ref` : 'Custom prompt';
+    return {name, tags};
+  }
+}
+
+// ── Inspiration images ────────────────────
+function inspoOnDragOver(e) {
+  e.preventDefault();
+  document.getElementById('inspoZone').classList.add('drag-over');
+}
+function inspoOnDragLeave(e) {
+  document.getElementById('inspoZone').classList.remove('drag-over');
+}
+function inspoOnDrop(e) {
+  e.preventDefault();
+  document.getElementById('inspoZone').classList.remove('drag-over');
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+  addInspoFiles(files);
+}
+function inspoOnFilePick(e) {
+  addInspoFiles(Array.from(e.target.files));
+  e.target.value = '';
+}
+function addInspoFiles(files) {
+  const remaining = 3 - inspoImages.length;
+  files.slice(0, remaining).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      // Resize to max 512px and convert to jpeg base64
+      const img = new Image();
+      img.onload = function() {
+        const MAX = 512;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(img.width  * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        const b64 = dataUrl.split(',')[1];
+        inspoImages.push({dataUrl, b64});
+        renderInspoPreviews();
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function removeInspo(idx) {
+  inspoImages.splice(idx, 1);
+  renderInspoPreviews();
+}
+function renderInspoPreviews() {
+  const container = document.getElementById('inspoPreviews');
+  container.innerHTML = inspoImages.map((img, i) => `
+    <div class="inspo-thumb">
+      <img src="${img.dataUrl}" alt="Inspiration ${i+1}">
+      <button class="inspo-remove" onclick="removeInspo(${i})" title="Remove">✕</button>
+    </div>
+  `).join('');
+  // Show/hide the drop zone hint based on count
+  const zone = document.getElementById('inspoZone');
+  if (inspoImages.length >= 3) {
+    zone.style.display = 'none';
+  } else {
+    zone.style.display = '';
+    const sub = zone.querySelector('.inspo-sub');
+    if (sub) sub.textContent = inspoImages.length === 0
+      ? 'Mood board · style reference · max 3 images'
+      : `${inspoImages.length}/3 added — drop more or click`;
+  }
+}
+
+function timeAgo(ts) {
+  const s = Math.floor((Date.now()-ts)/1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return `${Math.floor(s/60)}m ago`;
+  return `${Math.floor(s/3600)}h ago`;
+}
+
+// ── Keyboard ──────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+    if (document.activeElement?.id === 'refineInput') refine();
+    else generate();
+  }
+});
+
+// Init
+updatePreviewHint();
+</script>
+</body>
+</html>

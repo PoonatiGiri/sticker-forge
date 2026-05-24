@@ -1,0 +1,17 @@
+# Environment — never commit your API keys
+.env
+
+# Dependencies
+node_modules/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Internal tooling
+.claude/
+gen_examples.py
+
+# Logs
+*.log
+npm-debug.log*
