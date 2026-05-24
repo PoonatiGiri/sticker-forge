@@ -515,6 +515,128 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+/* ── Mobile responsive (≤ 640px) ────── */
+@media (max-width: 640px) {
+
+  /* Body: natural page scroll */
+  body {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100svh;
+    overflow-y: auto;
+  }
+  body.refine-active { padding-bottom: 104px; }
+
+  /* Compact header — ditch step pills */
+  .header { padding: 10px 14px; gap: 8px; }
+  .header-steps { display: none; }
+  .logo-tag { display: none; }
+
+  /* Stack layout vertically */
+  .main { flex-direction: column; flex: none; overflow: visible; }
+
+  /* Controls: full width, natural height */
+  .controls {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1.5px solid var(--border);
+    overflow: visible;
+  }
+  .controls-inner {
+    overflow-y: visible;
+    max-height: none;
+    padding: 14px 14px 0;
+    gap: 14px;
+  }
+  .controls-footer { padding: 10px 14px 14px; }
+
+  /* Canvas area */
+  .canvas-wrap { flex: none; overflow: visible; }
+  .canvas {
+    flex: none;
+    overflow: visible;
+    padding: 16px 14px 32px;
+    min-height: 30vh;
+  }
+
+  /* Results: 2 columns */
+  .results-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* Examples: 2 columns */
+  .examples-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .example-footer { padding: 7px 9px; }
+  .example-name { font-size: 12px; }
+  .example-vibe { font-size: 10px; }
+
+  /* Mascot buttons: tighter */
+  .mascot-btn { padding: 8px 9px; gap: 7px; }
+  .mascot-icon { font-size: 18px; }
+  .mascot-name { font-size: 11px; }
+  .mascot-sub { font-size: 9px; }
+
+  /* Vibe buttons: tighter */
+  .style-btn { padding: 7px 8px; gap: 2px; }
+  .style-icon { font-size: 14px; }
+  .style-name { font-size: 11px; }
+  .style-desc { font-size: 9px; }
+
+  /* Category chips */
+  .cat-chip { font-size: 10.5px; padding: 4px 9px; }
+
+  /* Empty state */
+  .empty-top { padding: 14px 0 16px; }
+  .empty-art { font-size: 40px; }
+  .empty-title { font-size: 16px; }
+  .empty-sub { font-size: 12.5px; }
+
+  /* Refine strip: fixed to viewport bottom */
+  .refine-strip {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 10px 14px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -2px 20px rgba(0,0,0,.13);
+  }
+  .refine-inner { flex-wrap: wrap; gap: 6px; }
+  .refine-sel { flex: 0 0 100%; font-size: 11px; text-align: center; }
+  .refine-input { flex: 1; min-width: 0; font-size: 13px; }
+  .refine-btn { flex-shrink: 0; padding: 8px 14px; font-size: 12px; }
+
+  /* Hide keyboard hint */
+  .kbd-hint { display: none; }
+
+  /* Generate button */
+  .generate-btn { font-size: 13px; padding: 11px 18px; }
+
+  /* Run block */
+  .run-block { padding: 12px; margin-bottom: 16px; }
+  .run-name { font-size: 13px; }
+  .run-tags { font-size: 11px; }
+
+  /* Session toolbar */
+  .session-toolbar { margin-bottom: 14px; }
+  .run-counter { font-size: 12px; padding: 4px 12px; }
+  .clear-btn { font-size: 11px; padding: 5px 10px; }
+
+  /* Card overlay actions: bigger touch targets */
+  .card-btn { padding: 8px 6px; font-size: 11px; }
+
+  /* Inspo thumbnails: slightly larger */
+  .inspo-thumb { width: 56px; height: 56px; }
+
+  /* Hide scrollbar on mobile */
+  ::-webkit-scrollbar { display: none; }
+}
+
+/* ── Very small screens (≤ 360px) ────── */
+@media (max-width: 360px) {
+  .mascot-grid { grid-template-columns: 1fr 1fr; }
+  .styles-grid { grid-template-columns: 1fr 1fr; }
+  .results-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .examples-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+}
 </style>
 </head>
 <body>
@@ -1139,6 +1261,7 @@ function selectCard(runId, cardIdx) {
   const label = document.getElementById('refineSelLabel');
   const input = document.getElementById('refineInput');
   strip.style.display = 'block';
+  document.body.classList.add('refine-active');
   if (label) label.textContent = `Variation ${cardIdx+1} selected`;
   if (input) { input.placeholder = `What would you change about Variation ${cardIdx+1}?`; input.focus(); }
 }
@@ -1159,6 +1282,7 @@ function clearSession() {
   allRuns = []; activeSelection = null;
   document.getElementById('runsContainer').innerHTML = '';
   document.getElementById('refineStrip').style.display = 'none';
+  document.body.classList.remove('refine-active');
   document.getElementById('refineInput').value = '';
   showEmptyState();
 }
