@@ -210,16 +210,22 @@ const VIBES = {
     art:  'soft pastel dream illustration — delicate watercolor washes, fine elegant line weight, blurred dreamy edges. Palette: rose, lavender, sage, and warm cream. Art nouveau meets modern kawaii. Soft white background with subtle texture.',
     font: 'elegant thin serif or flowing script font, graceful letterforms, in soft rose or gold',
   },
+  '3d': {
+    art:  '3D-rendered soft clay character in Pixar–Illumination studio style — round voluminous forms, subsurface scattering on smooth skin and material surfaces, three-point studio lighting with a soft warm key light and cool rim light, ambient occlusion in crevices, physically-based rendering. Vivid vibrant solid-color gradient background. No black outlines — pure volumetric 3D shading only. Cinematic render quality, professional CG character illustration.',
+    font: 'bold 3D extruded rounded lettering with a soft drop shadow and slight bevel, chunky friendly bubble-letter feel',
+  },
 };
 
 // ── Prompt builders ───────────────────────────────────────────────────────────
 
-function buildGuidedPrompt(name, category, mascotType, vibe, details, refinement, inspirationStyle) {
+function buildGuidedPrompt(name, category, mascotType, vibe, details, refinement, inspirationStyle, format) {
   const v = VIBES[vibe] || VIBES.cute;
   const context = CATEGORY_CONTEXT[category] || CATEGORY_CONTEXT.saas;
   const displayName = name?.trim() || '';
 
-  let p = 'Die-cut vinyl sticker with a thick white outline border on a white background. ';
+  let p = format === 'appicon'
+    ? 'Professional character illustration in app-icon format — character centered on a vivid solid-color gradient background, rounded-square composition. No sticker border. '
+    : 'Die-cut vinyl sticker with a thick white outline border on a white background. ';
 
   if (mascotType === 'badge') {
     p += `Bold graphic badge logo sticker ${context}. `;
@@ -249,7 +255,7 @@ function buildGuidedPrompt(name, category, mascotType, vibe, details, refinement
   return p;
 }
 
-function buildCustomPrompt(description, style, name, refinement, inspirationStyle) {
+function buildCustomPrompt(description, style, name, refinement, inspirationStyle, format) {
   const STYLE_PROMPTS = {
     mascot:    'kawaii illustrated mascot — big expressive eyes, soft rounded shapes, vibrant flat colors, die-cut sticker, thick clean black outlines. White background.',
     retro:     'retro vintage badge sticker — 1960s Americana, bold condensed lettering, 3-color screenprint, circular shape, distressed texture.',
@@ -263,7 +269,9 @@ function buildCustomPrompt(description, style, name, refinement, inspirationStyl
     pastel:    'soft pastel illustration — watercolor washes, delicate linework, dreamy rose-lavender palette, art nouveau feel.',
   };
   const styleDesc = STYLE_PROMPTS[style] || STYLE_PROMPTS.mascot;
-  let p = 'Die-cut sticker with thick white border outline on white background. ';
+  let p = format === 'appicon'
+    ? 'Professional character illustration in app-icon format — character centered on a vivid solid-color gradient background, rounded-square composition. No sticker border. '
+    : 'Die-cut sticker with thick white border outline on white background. ';
   p += `Concept: ${description.trim()}. `;
   if (name?.trim()) p += `Include the name "${name.trim()}" as text in the design. `;
   p += `${styleDesc} `;
@@ -307,6 +315,7 @@ app.post('/api/generate', async (req, res) => {
     mode, name, category, mascotType, vibe, details,
     description, style, refinement,
     inspirationImages,  // array of base64 strings (up to 3)
+    format,             // 'sticker' | 'appicon'
   } = req.body;
 
   const apiKey = process.env.OPENAI_API_KEY;
@@ -328,12 +337,12 @@ app.post('/api/generate', async (req, res) => {
     if (!name?.trim() && !details?.trim()) {
       return res.status(400).json({ error: 'Enter a name or add some details to get started' });
     }
-    prompt = buildGuidedPrompt(name, category || 'saas', mascotType || 'animal', vibe || 'cute', details, refinement, inspirationStyle);
+    prompt = buildGuidedPrompt(name, category || 'saas', mascotType || 'animal', vibe || 'cute', details, refinement, inspirationStyle, format || 'sticker');
   } else {
     if (!description?.trim()) {
       return res.status(400).json({ error: 'Description is required' });
     }
-    prompt = buildCustomPrompt(description, style, name, refinement, inspirationStyle);
+    prompt = buildCustomPrompt(description, style, name, refinement, inspirationStyle, format || 'sticker');
   }
 
   // Three separate calls with different composition notes → genuinely varied output
@@ -351,7 +360,7 @@ app.post('/api/generate', async (req, res) => {
           prompt: `${prompt} ${note}`,
           n: 1,
           size: '1024x1024',
-          quality: 'medium',
+          quality: 'high',
         })
       )
     );

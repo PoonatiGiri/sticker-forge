@@ -334,6 +334,26 @@ body {
 }
 .preview-hint strong { color: var(--accent); font-weight: 700; }
 
+/* Format toggle */
+.format-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.format-row-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--text-muted); flex-shrink: 0;
+}
+.format-tabs {
+  display: flex; flex: 1; background: var(--surface-2);
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  padding: 3px; gap: 3px;
+}
+.format-tab {
+  flex: 1; padding: 6px 8px; font-family: inherit;
+  font-size: 11.5px; font-weight: 600; border: none; border-radius: 6px;
+  cursor: pointer; transition: all .12s; background: transparent; color: var(--text-muted);
+  white-space: nowrap;
+}
+.format-tab.active { background: var(--bg); color: var(--text); box-shadow: var(--shadow-sm); }
+.format-tab:hover:not(.active) { color: var(--text); }
+
 /* Generate button */
 .generate-btn {
   width: 100%; padding: 13px 20px;
@@ -785,6 +805,10 @@ body {
               <div class="vibe-header"><span class="style-icon">🌸</span><div class="vibe-swatches"><span class="swatch" style="background:#FBCFE8"></span><span class="swatch" style="background:#DDD6FE"></span><span class="swatch" style="background:#A7F3D0"></span></div></div>
               <span class="style-name">Pastel Dream</span><span class="style-desc">Soft, art nouveau</span>
             </button>
+            <button class="style-btn" data-vibe="3d" onclick="pickVibe(this)" style="grid-column:span 2;border-color:#818CF8;background:rgba(129,140,248,.06)">
+              <div class="vibe-header"><span class="style-icon">🧸</span><div class="vibe-swatches"><span class="swatch" style="background:#FF6B9D"></span><span class="swatch" style="background:#4ECDC4"></span><span class="swatch" style="background:#FFE66D"></span><span class="swatch" style="background:#A78BFA"></span></div></div>
+              <span class="style-name">3D Render ✦ New</span><span class="style-desc">Clay, Pixar-style · high quality</span>
+            </button>
           </div>
         </div>
 
@@ -850,6 +874,13 @@ body {
 
     <div class="controls-footer">
       <div class="preview-hint" id="previewHint"></div>
+      <div class="format-row">
+        <span class="format-row-label">Output</span>
+        <div class="format-tabs">
+          <button class="format-tab active" data-fmt="sticker" onclick="switchFormat(this)">🏷️ Sticker</button>
+          <button class="format-tab" data-fmt="appicon" onclick="switchFormat(this)">📱 App Icon</button>
+        </div>
+      </div>
       <button class="generate-btn" id="generateBtn" onclick="generate()">
         <span id="btnIcon">✨</span>
         <span id="btnText">Generate 3 Stickers</span>
@@ -971,7 +1002,7 @@ const CAT_LABELS = {
   education:'🎓 Education', creative:'🎨 Creative', photography:'📸 Photography', finance:'💰 Finance', services:'💼 Services',
 };
 const MASCOT_LABELS = {animal:'🐱 Animal',robot:'🤖 Robot',human:'🧙 Person',fantasy:'🐉 Fantasy',food:'🍕 Object',hero:'🦸 Hero',badge:'🏷️ Badge'};
-const VIBE_LABELS   = {cute:'🎀 Cute',bold:'💥 Bold',clean:'✦ Clean',retro:'🕰️ Retro',tech:'⚡ Tech',stamp:'📮 Stamp',handdrawn:'✏️ Sketch',pixel:'👾 Pixel',synthwave:'🌅 Synth',pastel:'🌸 Pastel'};
+const VIBE_LABELS   = {cute:'🎀 Cute',bold:'💥 Bold',clean:'✦ Clean',retro:'🕰️ Retro',tech:'⚡ Tech',stamp:'📮 Stamp',handdrawn:'✏️ Sketch',pixel:'👾 Pixel',synthwave:'🌅 Synth',pastel:'🌸 Pastel','3d':'🧸 3D Render'};
 
 const CHAR_PREVIEWS = {
   animal: {
@@ -1027,7 +1058,7 @@ const CHAR_PREVIEWS = {
 const VIBE_PREVIEWS = {
   cute:'kawaii style', bold:'bold pop art', clean:'minimal flat design', retro:'vintage Americana',
   tech:'cyberpunk neon', stamp:'official stamp', handdrawn:'hand-drawn sketch', pixel:'pixel art',
-  synthwave:'80s synthwave', pastel:'pastel dream',
+  synthwave:'80s synthwave', pastel:'pastel dream', '3d':'Pixar-style 3D render',
 };
 
 // ── State ─────────────────────────────────
@@ -1037,6 +1068,7 @@ let guidedCategory  = 'saas';
 let guidedMascot    = 'animal';
 let guidedVibe      = 'cute';
 let customStyle     = 'mascot';
+let outputFormat    = 'sticker'; // 'sticker' | 'appicon'
 let activeSelection = null; // {runId, cardIdx}
 let inspoImages     = [];   // [{dataUrl, b64}] — up to 3
 
@@ -1050,6 +1082,12 @@ function applyTheme(theme) {
 function toggleTheme() {
   const current = document.documentElement.getAttribute('data-theme') || 'light';
   applyTheme(current === 'light' ? 'dark' : 'light');
+}
+
+// ── Format toggle ─────────────────────────
+function switchFormat(btn) {
+  outputFormat = btn.dataset.fmt;
+  document.querySelectorAll('.format-tab').forEach(t => t.classList.toggle('active', t.dataset.fmt === outputFormat));
 }
 
 // ── Mode / pickers ────────────────────────
@@ -1124,7 +1162,7 @@ async function generate(refinement = null) {
       return;
     }
     const inspirationImages = inspoImages.map(i => i.b64);
-    body = {mode:'guided', name, category:guidedCategory, mascotType:guidedMascot, vibe:guidedVibe, details, refinement, inspirationImages};
+    body = {mode:'guided', name, category:guidedCategory, mascotType:guidedMascot, vibe:guidedVibe, details, refinement, inspirationImages, format:outputFormat};
   } else {
     const description = document.getElementById('customDesc').value.trim();
     if (!description) {
@@ -1134,7 +1172,7 @@ async function generate(refinement = null) {
       return;
     }
     const inspirationImages = inspoImages.map(i => i.b64);
-    body = {mode:'custom', name, description, style:customStyle, refinement, inspirationImages};
+    body = {mode:'custom', name, description, style:customStyle, refinement, inspirationImages, format:outputFormat};
   }
 
   activeSelection = null;
