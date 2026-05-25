@@ -805,9 +805,13 @@ body {
               <div class="vibe-header"><span class="style-icon">🌸</span><div class="vibe-swatches"><span class="swatch" style="background:#FBCFE8"></span><span class="swatch" style="background:#DDD6FE"></span><span class="swatch" style="background:#A7F3D0"></span></div></div>
               <span class="style-name">Pastel Dream</span><span class="style-desc">Soft, art nouveau</span>
             </button>
-            <button class="style-btn" data-vibe="3d" onclick="pickVibe(this)" style="grid-column:span 2;border-color:#818CF8;background:rgba(129,140,248,.06)">
-              <div class="vibe-header"><span class="style-icon">🧸</span><div class="vibe-swatches"><span class="swatch" style="background:#FF6B9D"></span><span class="swatch" style="background:#4ECDC4"></span><span class="swatch" style="background:#FFE66D"></span><span class="swatch" style="background:#A78BFA"></span></div></div>
-              <span class="style-name">3D Render ✦ New</span><span class="style-desc">Clay, Pixar-style · high quality</span>
+            <button class="style-btn" data-vibe="3d" onclick="pickVibe(this)" style="border-color:#818CF8;background:rgba(129,140,248,.06)">
+              <div class="vibe-header"><span class="style-icon">🎬</span><div class="vibe-swatches"><span class="swatch" style="background:#FF6B9D"></span><span class="swatch" style="background:#4ECDC4"></span><span class="swatch" style="background:#A78BFA"></span></div></div>
+              <span class="style-name">3D Cinematic</span><span class="style-desc">Pixar CGI, volumetric</span>
+            </button>
+            <button class="style-btn" data-vibe="soft3d" onclick="pickVibe(this)" style="border-color:#F472B6;background:rgba(244,114,182,.06)">
+              <div class="vibe-header"><span class="style-icon">✨</span><div class="vibe-swatches"><span class="swatch" style="background:#4ECDC4"></span><span class="swatch" style="background:#FFE66D"></span><span class="swatch" style="background:#FF6B9D"></span></div></div>
+              <span class="style-name">App Icon 3D</span><span class="style-desc">App Store style, soft 3D</span>
             </button>
           </div>
         </div>
@@ -1002,7 +1006,7 @@ const CAT_LABELS = {
   education:'🎓 Education', creative:'🎨 Creative', photography:'📸 Photography', finance:'💰 Finance', services:'💼 Services',
 };
 const MASCOT_LABELS = {animal:'🐱 Animal',robot:'🤖 Robot',human:'🧙 Person',fantasy:'🐉 Fantasy',food:'🍕 Object',hero:'🦸 Hero',badge:'🏷️ Badge'};
-const VIBE_LABELS   = {cute:'🎀 Cute',bold:'💥 Bold',clean:'✦ Clean',retro:'🕰️ Retro',tech:'⚡ Tech',stamp:'📮 Stamp',handdrawn:'✏️ Sketch',pixel:'👾 Pixel',synthwave:'🌅 Synth',pastel:'🌸 Pastel','3d':'🧸 3D Render'};
+const VIBE_LABELS   = {cute:'🎀 Cute',bold:'💥 Bold',clean:'✦ Clean',retro:'🕰️ Retro',tech:'⚡ Tech',stamp:'📮 Stamp',handdrawn:'✏️ Sketch',pixel:'👾 Pixel',synthwave:'🌅 Synth',pastel:'🌸 Pastel','3d':'🎬 3D Cinematic',soft3d:'✨ App Icon 3D'};
 
 const CHAR_PREVIEWS = {
   animal: {
@@ -1058,7 +1062,7 @@ const CHAR_PREVIEWS = {
 const VIBE_PREVIEWS = {
   cute:'kawaii style', bold:'bold pop art', clean:'minimal flat design', retro:'vintage Americana',
   tech:'cyberpunk neon', stamp:'official stamp', handdrawn:'hand-drawn sketch', pixel:'pixel art',
-  synthwave:'80s synthwave', pastel:'pastel dream', '3d':'Pixar-style 3D render',
+  synthwave:'80s synthwave', pastel:'pastel dream', '3d':'Pixar CGI 3D render', soft3d:'App Store soft 3D',
 };
 
 // ── State ─────────────────────────────────

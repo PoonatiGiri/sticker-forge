@@ -211,7 +211,11 @@ const VIBES = {
     font: 'elegant thin serif or flowing script font, graceful letterforms, in soft rose or gold',
   },
   '3d': {
-    art:  'Pixar–Disney 3D CGI animated movie character. Smooth rounded clay-like volumetric forms, subsurface scattering on soft surfaces, ambient occlusion in folds and crevices, three-point studio lighting with warm key light and cool rim light, physically-based rendering with specular highlights on smooth materials. Absolutely NO flat illustration. NO 2D outlines. NO cartoon ink lines. Pure smooth 3D geometry with volumetric shading only. Professional high-fidelity CG render.',
+    art:  'Pixar–Disney 3D CGI animated movie character. Smooth rounded clay-like volumetric forms, subsurface scattering on soft surfaces, ambient occlusion in folds and crevices, three-point studio lighting with warm key light and cool rim light, physically-based rendering with specular highlights. Absolutely NO flat illustration, NO 2D outlines, NO cartoon ink lines — pure smooth 3D geometry with volumetric shading only. Professional high-fidelity CG render.',
+    font: 'bold 3D extruded rounded lettering with bevel and soft drop shadow, chunky bubble-letter feel',
+  },
+  soft3d: {
+    art:  'Polished soft 3D illustration style matching top App Store icons — smooth rounded clay-like forms, soft volumetric shading, ambient occlusion in crevices, gentle three-point studio lighting, clean silhouette. Rendering quality consistent with Duolingo, Headspace-tier professional app icon characters. Smooth gradient shading on 3D forms, no harsh ink outlines.',
     font: 'bold 3D extruded rounded lettering with bevel and soft drop shadow, chunky bubble-letter feel',
   },
 };
@@ -222,12 +226,18 @@ function buildGuidedPrompt(name, category, mascotType, vibe, details, refinement
   const v = VIBES[vibe] || VIBES.cute;
   const context = CATEGORY_CONTEXT[category] || CATEGORY_CONTEXT.saas;
   const displayName = name?.trim() || '';
-  const is3D = vibe === '3d';
+  const is3D = vibe === '3d' || vibe === 'soft3d';
 
-  // For 3D: rendering style must lead the prompt — anchors the model before character details.
-  // For all others: opener sets the format, character description follows.
+  // Both 3D vibes front-load their rendering style to anchor the model before character details.
+  // soft3d uses App Store / tweet-proven language; 3d uses heavy Pixar-CGI language.
+  // All other vibes: format opener first, then character, then style at the end.
   let p;
-  if (is3D) {
+  if (vibe === 'soft3d') {
+    p = format === 'appicon'
+      ? 'Cute original mascot-style iOS app icon. High-converting App Store-friendly design — rounded square background with vibrant solid-color gradient, bold simple shapes, expressive face, clean silhouette, polished soft 3D style. Memorable and charming. '
+      : 'Cute original mascot character in polished soft 3D style. Die-cut sticker with white outline border on white background. Bold simple shapes, expressive face, clean silhouette. ';
+    p += `${v.art} `;
+  } else if (vibe === '3d') {
     p = format === 'appicon'
       ? '3D CGI character render in Pixar–Disney animated movie style. App-icon format: character on vivid solid-color gradient background, no border. '
       : '3D CGI character render in Pixar–Disney animated movie style. Die-cut sticker with white outline border on white background. ';
