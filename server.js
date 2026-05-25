@@ -211,8 +211,8 @@ const VIBES = {
     font: 'elegant thin serif or flowing script font, graceful letterforms, in soft rose or gold',
   },
   '3d': {
-    art:  '3D-rendered soft clay character in Pixar–Illumination studio style — round voluminous forms, subsurface scattering on smooth skin and material surfaces, three-point studio lighting with a soft warm key light and cool rim light, ambient occlusion in crevices, physically-based rendering. Vivid vibrant solid-color gradient background. No black outlines — pure volumetric 3D shading only. Cinematic render quality, professional CG character illustration.',
-    font: 'bold 3D extruded rounded lettering with a soft drop shadow and slight bevel, chunky friendly bubble-letter feel',
+    art:  'Pixar–Disney 3D CGI animated movie character. Smooth rounded clay-like volumetric forms, subsurface scattering on soft surfaces, ambient occlusion in folds and crevices, three-point studio lighting with warm key light and cool rim light, physically-based rendering with specular highlights on smooth materials. Absolutely NO flat illustration. NO 2D outlines. NO cartoon ink lines. Pure smooth 3D geometry with volumetric shading only. Professional high-fidelity CG render.',
+    font: 'bold 3D extruded rounded lettering with bevel and soft drop shadow, chunky bubble-letter feel',
   },
 };
 
@@ -222,10 +222,21 @@ function buildGuidedPrompt(name, category, mascotType, vibe, details, refinement
   const v = VIBES[vibe] || VIBES.cute;
   const context = CATEGORY_CONTEXT[category] || CATEGORY_CONTEXT.saas;
   const displayName = name?.trim() || '';
+  const is3D = vibe === '3d';
 
-  let p = format === 'appicon'
-    ? 'Professional character illustration in app-icon format — character centered on a vivid solid-color gradient background, rounded-square composition. No sticker border. '
-    : 'Die-cut vinyl sticker with a thick white outline border on a white background. ';
+  // For 3D: rendering style must lead the prompt — anchors the model before character details.
+  // For all others: opener sets the format, character description follows.
+  let p;
+  if (is3D) {
+    p = format === 'appicon'
+      ? '3D CGI character render in Pixar–Disney animated movie style. App-icon format: character on vivid solid-color gradient background, no border. '
+      : '3D CGI character render in Pixar–Disney animated movie style. Die-cut sticker with white outline border on white background. ';
+    p += `${v.art} `;
+  } else {
+    p = format === 'appicon'
+      ? 'Professional character illustration in app-icon format — character centered on a vivid solid-color gradient background, rounded-square composition. No sticker border. '
+      : 'Die-cut vinyl sticker with a thick white outline border on a white background. ';
+  }
 
   if (mascotType === 'badge') {
     p += `Bold graphic badge logo sticker ${context}. `;
@@ -247,11 +258,13 @@ function buildGuidedPrompt(name, category, mascotType, vibe, details, refinement
     if (displayName) p += `Below the character, include the name "${displayName}" in ${v.font}. `;
   }
 
-  p += `${v.art} `;
+  if (!is3D) p += `${v.art} `;
   if (inspirationStyle?.trim()) p += `Mood / inspiration style: ${inspirationStyle.trim()}. `;
   if (details?.trim())          p += `Extra direction: ${details.trim()}. `;
   if (refinement?.trim())       p += `Refinement: ${refinement.trim()}. `;
-  p += 'Bold and memorable. Legible at 2-inch printed sticker size. Maximum 5 colors. Designed for laptop sticker use.';
+  p += is3D
+    ? 'Bold and memorable. Professional CG render quality. App store icon ready.'
+    : 'Bold and memorable. Legible at 2-inch printed sticker size. Maximum 5 colors. Designed for laptop sticker use.';
   return p;
 }
 
